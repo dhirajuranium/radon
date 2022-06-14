@@ -1,23 +1,21 @@
 const express = require('express');
-const bodyParser = require('body-parser');
-const route = require('./routes/route.js');
-const { default: mongoose } = require('mongoose');
-const app = express();
+const router = express.Router();
+const userController= require("../controllers/userController")
+const Auth = require("../Middleware/auth")
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-
-
-mongoose.connect("mongodb+srv://dhirajpatil:XuEAzywgRheQB7B1@cluster0.0v32f.mongodb.net/Dhiraj2198-DB?retryWrites=true&w=majority", {
-    useNewUrlParser: true
+router.get("/test-me", function (req, res) {
+    res.send("My first ever api!")
 })
-.then( () => console.log("MongoDb is connected"))
-.catch ( err => console.log(err) )
 
+router.post("/users", userController.createUser  )
 
-app.use('/', route)
+router.post("/login", userController.loginUser)
 
+//The userId is sent by front end
+router.get("/users/:userId",Auth.authMiddleware, userController.getUserData)
 
-app.listen(process.env.PORT || 3000, function () {
-    console.log('Express app running on port ' + (process.env.PORT || 3000))
-});
+router.put("/users/:userId",Auth.authMiddleware, userController.updateUser)
+
+router.delete("/delet-users/:userId",Auth.authMiddleware, userController.deleteUser)
+
+module.exports = router;
