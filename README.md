@@ -6,6 +6,8 @@ https://github.com/sabihak89/radon/tree/project/blog#radon
 1- authentication me token validation ka clear karna hai - remaining 
 2- delete and update api me blogId nahi deta hai toh error handle karna hai ya nahi ? - ye shayad se karna hi nahi h
 3- msg add karna hai 
+4- delete by query  problem in auth.js in authorization part.
+    
 
 https://github.com/jai84322/project-blog.git
 

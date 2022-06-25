@@ -22,7 +22,7 @@ const createBlog = async function (req, res) {
         }
 
         if (body.length < 4) {
-            return res.status(400).send({status: false, msg: "body length should be more than 4 characters"})
+            return res.status(400).send({ status: false, msg: "body length should be more than 4 characters" })
         }
 
         if (!authorId) {
@@ -32,7 +32,7 @@ const createBlog = async function (req, res) {
         if (authorId.length !== 24) {
             return res.status(400).send({ status: false, msg: "Please enter proper length of author Id (24)" })
         }
-        
+
         let validAuthor = await authorModel.findById(authorId)
         if (!validAuthor) {
             return res.status(400).send({ status: false, msg: "Please enter the valid authorId" })
@@ -43,7 +43,7 @@ const createBlog = async function (req, res) {
         }
 
         let createdBlog = await blogModel.create(data)
-        res.status(201).send({ status: true, data: createdBlog })
+        res.status(201).send({ status: true, data: createdBlog, msg: "Your blog has been created successfully" })
     } catch (err) {
         res.status(500).send({ status: false, msg: err.message })
     }
@@ -61,9 +61,9 @@ const getBlogs = async function (req, res) {
             return res.status(404).send({ status: false, msg: "no such document found" })
         }
 
-        return res.status(200).send({ status: true, data: blog })
+        return res.status(200).send({ status: true, data: blog, msg: "here all blogs are, related to your search" })
     } catch (err) {
-       return res.status(500).send({ status: false, msg: err.message })
+        return res.status(500).send({ status: false, msg: err.message })
     }
 }
 
@@ -72,7 +72,7 @@ const getBlogs = async function (req, res) {
 const updateBlogs = async function (req, res) {
     try {
         let data = req.body
-        let {title, body, authorId, category, isPublished, tags, subcategory} = req.body
+        let { title, body, authorId, category, isPublished, tags, subcategory } = data
         let blogId = req.params.blogId
 
         if (Object.keys(data).length == 0) {
@@ -80,22 +80,25 @@ const updateBlogs = async function (req, res) {
         }
 
         let updatedData = await blogModel.findOneAndUpdate(
-            { _id: blogId, isDeleted : false },
-            { 
+            { _id: blogId, isDeleted: false },
+            {
                 title: title,
                 body: body,
-                category:category,
-                isPublished: isPublished, 
+                category: category,
+                isPublished: isPublished,
                 authorId: authorId,
-                $push: { tags: tags, subcategory : subcategory}
-                },  
+                $push: { tags: tags, subcategory: subcategory }
+            },
             { new: true }
-        ) 
+        )
 
         if (updatedData.isPublished === true) {
             updatedData.publishedAt = Date.now()
             await updatedData.save()
-            return res.status(200).send({status:true, data: updatedData})
+            return res.status(200).send({ status: true, data: updatedData })
+        } else {
+            updatedData.publishedAt = null
+            await updatedData.save()
         }
 
         return res.status(200).send({ status: true, data: updatedData })
@@ -109,15 +112,13 @@ const updateBlogs = async function (req, res) {
 const deleteBlogByPathParam = async function (req, res) {
     try {
         let blogId = req.params.blogId
-       
-
-        // let checkBlog = await blogModel.findById(blogId)
 
         let deletedBlog = await blogModel.updateOne(
-            { _id: blogId, isDeleted: false }, 
-            {$set:  {isDeleted: true}, deletedAt : Date.now()}, 
+            { _id: blogId, isDeleted: false },
+            { $set: { isDeleted: true }, deletedAt: Date.now() },
             { new: true })
-        return res.status(200).send({ status: true, data: deletedBlog })
+
+        return res.status(200).send({ status: true, data: deletedBlog, msg: "This blog is deleted" })
     } catch (err) {
         return res.status(500).send({ status: false, msg: err.message })
     }
@@ -128,22 +129,22 @@ const deleteBlogByPathParam = async function (req, res) {
 const deleteBlogsByQuery = async function (req, res) {
 
     try {
-        let {category, authorId, tags, subcategory, isPublished} = req.query
+        let { category, authorId, tags, subcategory, isPublished } = req.query
 
-        let deleteData = await blogModel.updateMany({ 
+        let deleteData = await blogModel.updateMany({
 
-            authorId : req.decodedToken.authorId, 
-            isDeleted: false, $or: [{ authorId: authorId },
+            authorId: req.decodedToken.authorId,
+            isDeleted: true, $or: [{ authorId: authorId },
             { isPublished: isPublished },
             { tags: tags },
             { category: category },
-            { subcategory: subcategory }] 
-        }, 
-        {$set:  {isDeleted: true}, deletedAt : Date.now()}, 
+            { subcategory: subcategory }]
+        },
+            { $set: { isDeleted: false }, deletedAt: Date.now() },
             { new: true })
 
-        if (!deleteData[0]) {
-            return res.status(404).send({status: false, msg : "document already deleted"})
+        if (deleteData.modifiedCount == 0) {
+            return res.status(404).send({ status: false, msg: "All documents are already deleted" })
         }
 
         return res.status(200).send({ status: true, data: deleteData })

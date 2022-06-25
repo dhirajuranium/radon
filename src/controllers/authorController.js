@@ -30,8 +30,8 @@ const createAuthor = async function (req, res) {
             return res.status(400).send({ status: false, msg: "title is missing" })
         }
 
-        if(!(title == "Mrs" || title == "Mr" || title == "Miss")) {
-           return res.status(401).send({error : "title has to be Mr or Mrs or Miss "})
+        if (!(title == "Mrs" || title == "Mr" || title == "Miss")) {
+            return res.status(401).send({ error: "title has to be Mr or Mrs or Miss " })
         }
 
         if (!email) {
@@ -57,8 +57,8 @@ const createAuthor = async function (req, res) {
         }
 
         let savedData = await authorModel.create(data)
-        
-        return res.status(201).send({ status: true, data: savedData  })
+
+        return res.status(201).send({ status: true, data: savedData, msg: "you are successfully registered" })
 
     } catch (err) {
         return res.status(500).send({ status: false, msg: err.message })
@@ -68,14 +68,13 @@ const createAuthor = async function (req, res) {
 const loginAuthor = async function (req, res) {
     try {
         let data = req.body;
-        let userName = req.body.email;
-        let password = req.body.password;
+        let { email, password } = data;
 
         if (Object.keys(data).length == 0) {
             return res.status(400).send({ status: false, msg: "please enter data in request body" })
         }
 
-        if (!userName) {
+        if (!email) {
             return res.status(400).send({ status: false, msg: "please enter email" })
         }
 
@@ -83,7 +82,7 @@ const loginAuthor = async function (req, res) {
             return res.status(400).send({ status: false, msg: "please enter password " })
         }
 
-        let user = await authorModel.findOne({ email: userName, password: password });
+        let user = await authorModel.findOne({ email: email, password: password });
         if (!user) {
             return res.status(400).send({ status: false, msg: "email or password is incorrect " })
         }
@@ -97,11 +96,10 @@ const loginAuthor = async function (req, res) {
             "WaJaiDhi-radon"
         )
 
-        // req["rightToken"] = token
-        // req.rightToken = token
+        req["rightToken"] = token
         res.setHeader("x-api-key", token)
-        
-        return res.status(200).send({ status: true, data: token })
+
+        return res.status(200).send({ status: true, data: token, msg: "you are successfully loggedin" })
     } catch (err) {
         return res.status(500).send({ status: false, msg: err.message })
     }
